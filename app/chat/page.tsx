@@ -29,7 +29,8 @@ export default function ChatPage() {
       const data = await res.json();
       const botMessage = { role: 'agent', text: data.response || 'No response received.' };
       setMessages(prev => [...prev, botMessage]);
-    } catch {
+    } catch (error) {
+      console.error('Error contacting agent:', error);
       setMessages(prev => [...prev, { role: 'agent', text: 'Error contacting agent.' }]);
     } finally {
       setLoading(false);
