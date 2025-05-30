@@ -29,7 +29,7 @@ export default function ChatPage() {
       const data = await res.json();
       const botMessage = { role: 'agent', text: data.response || 'No response received.' };
       setMessages(prev => [...prev, botMessage]);
-    } catch (err) {
+    } catch {
       setMessages(prev => [...prev, { role: 'agent', text: 'Error contacting agent.' }]);
     } finally {
       setLoading(false);
@@ -49,7 +49,6 @@ export default function ChatPage() {
 
       <div className="w-2/3 p-6 bg-white rounded-2xl shadow-md flex flex-col">
         <h2 className="text-lg font-semibold mb-2">Chatbot</h2>
-        
 
         <div className="flex-1 overflow-y-auto mb-4 space-y-2">
           {messages.map((msg, index) => (
@@ -91,4 +90,5 @@ export default function ChatPage() {
     </div>
   );
 }
+
 
