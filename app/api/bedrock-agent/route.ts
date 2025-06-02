@@ -21,24 +21,63 @@ export async function POST(req: NextRequest) {
       agentId: process.env.AWS_AGENT_ID!,
       agentAliasId: process.env.AWS_AGENT_ALIAS_ID!,
       sessionId: 'session-prueba-1',
-      inputText: inputText
+      inputText
     });
 
     const response: InvokeAgentCommandOutput = await client.send(command);
 
-    // Manejo simplificado de la respuesta
     let outputText = '';
-    
+    const textChunks: string[] = [];
+
     if (response.completion) {
-      // Si hay completion directa
-      if (typeof response.completion === 'string') {
-        outputText = response.completion;
-      } else {
-        // Si es un stream, lo convertimos a string
-        outputText = JSON.stringify(response.completion);
+      try {
+        for await (const chunk of response.completion) {
+          console.log('Chunk structure:', JSON.stringify(chunk, null, 2));
+
+          if (chunk.chunk?.bytes) {
+            const decoder = new TextDecoder('utf-8');
+            const decodedText = decoder.decode(chunk.chunk.bytes);
+            console.log('Decoded chunk bytes:', decodedText);
+
+            if (
+              !decodedText.includes('"options":') &&
+              !decodedText.includes('"messageStream":') &&
+              !decodedText.includes('"decoder":') &&
+              decodedText.trim().length > 0
+            ) {
+              textChunks.push(decodedText);
+            }
+          }
+
+          //if (chunk.trace?.orchestrationTrace?.modelInvocationOutput?.parsedResponse?.text) {
+          //  console.log('Found text in orchestrationTrace:', chunk.trace.orchestrationTrace.modelInvocationOutput.parsedResponse.text);
+          //  textChunks.push(chunk.trace.orchestrationTrace.modelInvocationOutput.parsedResponse.text);
+          //}
+
+          //if (chunk.trace?.orchestrationTrace?.rationale?.text) {
+          //  console.log('Found text in rationale:', chunk.trace.orchestrationTrace.rationale.text);
+          //  textChunks.push(chunk.trace.orchestrationTrace.rationale.text);
+         // }
+
+          //if (chunk.trace?.postProcessingTrace?.modelInvocationOutput?.parsedResponse?.text) {
+            //console.log('Found text in postProcessingTrace:', chunk.trace.postProcessingTrace.modelInvocationOutput.parsedResponse.text);
+            //textChunks.push(chunk.trace.postProcessingTrace.modelInvocationOutput.parsedResponse.text);
+          //}
+        }
+
+        console.log('All text chunks collected:', textChunks);
+        outputText = textChunks.join(' ').trim();
+
+        if (!outputText) {
+          console.log('No text found in chunks, using fallback response');
+          outputText = 'Hola, gracias por contactar con el asistente de TotalEnergies. ¿En qué puedo ayudarte específicamente?';
+        }
+      } catch (streamError) {
+        console.error('Error processing stream:', streamError);
+        outputText = 'Error al procesar la respuesta del agente.';
       }
     } else {
-      outputText = 'No response received from agent.';
+      outputText = 'No se recibió respuesta del agente.';
     }
 
     return NextResponse.json({ response: outputText });
@@ -50,4 +89,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-
