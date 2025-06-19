@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     const sessionId = 'session-informe-' + Date.now();
     let fullMarkdown = '';
  
-    for (let apartado = 1; apartado <= 5; apartado++) {
+    for (let apartado = 1; apartado <= 3; apartado++) {
       // ✅ Prompt simplificado sin caracteres especiales problemáticos
       const prompt = `${inputText}. Genera solo el apartado ${apartado} del informe en formato Markdown.`;
  
